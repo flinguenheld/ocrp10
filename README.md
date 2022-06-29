@@ -5,4 +5,7 @@ Créez une API sécurisée RESTful en utilisant Django REST
 ![Logo FLinguenheld](https://raw.githubusercontent.com/FLinguenheld/ocrp10/main/logos/forelif.png "Pouet")
 
 ****
-### Description
+### Comptes
+
+    admin@softdesk.fr
+    admin37
