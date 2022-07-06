@@ -11,13 +11,13 @@ class Project(models.Model):
         IOS = 'iOS'
         ANDROID = 'Android'
 
-    title = models.CharField(max_length=128)
+    title = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=2048, blank=True)
     type = models.CharField(choices=TypeProject.choices, max_length=50)
     time_created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title} - {self.type}"
+        return f"{self.id} : {self.title} - {self.type}"
 
 
 class Contributor(models.Model):
@@ -28,15 +28,18 @@ class Contributor(models.Model):
 
     project = models.ForeignKey(to=Project, on_delete=models.CASCADE)
     user = models.ForeignKey(to=User, on_delete=models.CASCADE)
-    permission = models.CharField(choices=Role.choices, max_length=50, default=Role.CONTRIBUTOR)
+    permission = models.CharField(choices=Role.choices,
+                                  max_length=50,
+                                  default=Role.CONTRIBUTOR)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['project', 'user'], name='unique_contributor')
+            models.UniqueConstraint(fields=['project', 'user'],
+                                    name='unique_contributor')
         ]
 
     def __str__(self):
-        return f"{self.user.email} - {self.permission} - {self.project}"
+        return f"{self.id} : {self.user.email} - {self.permission} - {self.project}"
 
 
 class Issue(models.Model):
@@ -58,15 +61,17 @@ class Issue(models.Model):
 
     title = models.CharField(max_length=128)
     description = models.CharField(max_length=2048, blank=True)
+    project = models.ForeignKey(to=Project,
+                                on_delete=models.CASCADE,
+                                related_name='issue_project')
     creator = models.ForeignKey(to=User,
                                 on_delete=models.CASCADE,
-                                related_name='user_creator')
+                                related_name='issue_creator')
     assigned_to = models.ForeignKey(to=User,
                                     on_delete=models.CASCADE,
-                                    related_name='assigned_to_user',
+                                    related_name='issue_assigned',
                                     null=True) 
     priority = models.CharField(choices=Priority.choices, max_length=50)
-    project = models.ForeignKey(to=Project, on_delete=models.CASCADE)
     status = models.CharField(choices=Status.choices, max_length=50)
     tag = models.CharField(choices=Tag.choices, max_length=50)
     time_created = models.DateTimeField(auto_now_add=True)
