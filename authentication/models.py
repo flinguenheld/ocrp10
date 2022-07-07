@@ -36,3 +36,6 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+    def __str__(self):
+        return f"{self.id} - {self.email}"
