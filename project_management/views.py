@@ -1,15 +1,11 @@
-from django.shortcuts import render
 from rest_framework import mixins
 from rest_framework import viewsets
-from rest_framework.viewsets import ModelViewSet, ViewSet
-from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
-
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
-
-from project_management.permissions import IsProjectCreator
+from project_management.permissions import IsProjectContributor
 from project_management.serializer import (ProjectSerializer,
                                             ContributorSerializer,
                                             ContributorAddSerializer)
@@ -23,9 +19,10 @@ class ProjectViewSet(mixins.RetrieveModelMixin,
 
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated, IsProjectCreator]
+    permission_classes = [IsAuthenticated, IsProjectContributor]
 
     def list(self, request):
+        # IsAuthenticated only
 
         contribs = Contributor.objects.filter(user=request.user)  # A CONFIRMER !!!!!!!!!!
         queryset = Project.objects.filter(contributor__in=contribs)
@@ -34,6 +31,7 @@ class ProjectViewSet(mixins.RetrieveModelMixin,
         return Response(serializer.data)
 
     def create(self, request):
+        # IsAuthenticated only
 
         serializer = ProjectSerializer(data=request.data)
 
@@ -51,6 +49,7 @@ class ProjectViewSet(mixins.RetrieveModelMixin,
 
     def destroy(self, request, pk=None):
 
+        # Creator only
         project = get_object_or_404(Project, pk=pk)
         self.check_object_permissions(request=request, obj=project)
 
@@ -69,9 +68,12 @@ class ProjectUserViewSet(viewsets.GenericViewSet):
 
     queryset = Contributor.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated, IsProjectCreator]
+    permission_classes = [IsAuthenticated, IsProjectContributor]
 
     def list(self, request, project_pk):
+
+        # Contributor only
+        self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
 
         contribs = Contributor.objects.filter(project=project_pk)
         serializer = ContributorSerializer(contribs, many=True)
@@ -79,6 +81,9 @@ class ProjectUserViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     def create(self, request, project_pk):
+
+        # Creator only
+        self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
 
         serializer = ContributorAddSerializer(data={'project': project_pk,
                                                   'user': request.data['new_contributor'],
@@ -93,9 +98,8 @@ class ProjectUserViewSet(viewsets.GenericViewSet):
 
     def destroy(self, request, pk=None, project_pk=None):
 
-        print('prout')
-        project = get_object_or_404(Project, pk=project_pk)
-        self.check_object_permissions(request, project)
+        # Creator only
+        self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
 
         contributor = Contributor.objects.filter(user=pk, project=project_pk)
 

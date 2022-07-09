@@ -3,7 +3,7 @@ from rest_framework import permissions
 from project_management.models import Contributor
 
 
-class IsProjectCreator(permissions.BasePermission):
+class IsProjectContributor(permissions.BasePermission):
     # message = 'nononon !!!!!!'
 
     def has_object_permission(self, request, view, obj):
