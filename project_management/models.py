@@ -22,15 +22,15 @@ class Project(models.Model):
 
 class Contributor(models.Model):
 
-    class Role(models.TextChoices):
+    class Permission(models.TextChoices):
         CREATOR = 'Créateur'
         CONTRIBUTOR = 'Contributeur'
 
     project = models.ForeignKey(to=Project, on_delete=models.CASCADE)
     user = models.ForeignKey(to=User, on_delete=models.CASCADE)
-    permission = models.CharField(choices=Role.choices,
+    permission = models.CharField(choices=Permission.choices,
                                   max_length=50,
-                                  default=Role.CONTRIBUTOR)
+                                  default=Permission.CONTRIBUTOR)
 
     class Meta:
         constraints = [
