@@ -18,3 +18,11 @@ class SignUpSerializer(ModelSerializer):
     def validate_password(self, password):
         if validate_password(password) is None:  # Raise a ValidationError with messages
             return make_password(password)
+
+
+class UserSerializer(ModelSerializer):
+    """ Simple serializer, used to display user in nested serializers """
+
+    class Meta:
+        model = User
+        fields = ['id', 'email']

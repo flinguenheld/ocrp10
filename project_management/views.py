@@ -1,15 +1,19 @@
 from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework import status
+from rest_framework import serializers
+
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
-from project_management.permissions import (ProjectViewPermissions)
+from project_management.permissions import (ProjectViewPermissions,
+                                            IssueViewPermissions)
 
 from project_management.serializer import (ProjectSerializer,
                                             ContributorSerializer,
                                             ContributorAddSerializer,
+                                            IssueSerializer,
                                             IssueAddSerializer)
 from project_management.models import (Project,
                                         Contributor,
@@ -121,22 +125,39 @@ class ProjectUserViewSet(viewsets.GenericViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class IssueViewSet(mixins.ListModelMixin,
-                   mixins.CreateModelMixin,
+class IssueViewSet(mixins.UpdateModelMixin,     # Issue's creator only
+                   mixins.DestroyModelMixin,    # Issue's creator only
                    viewsets.GenericViewSet):
 
     queryset = Issue.objects.all()
     serializer_class = IssueAddSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IssueViewPermissions]
+
+    def list(self, request, project_pk):
+
+        # Project contributors only
+        project = get_object_or_404(Project, pk=project_pk)
+        self.check_object_permissions(request, project)
+
+        issues = Issue.objects.filter(project=project)
+        serializer = IssueSerializer(issues, many=True)
+
+        return Response(serializer.data)
 
     def create(self, request, project_pk=None):
 
+        # Project contributors only
         project = get_object_or_404(Project, pk=project_pk)
+        self.check_object_permissions(request, project)
 
         serializer = IssueAddSerializer(data=request.data)
 
         if serializer.is_valid():
-            serializer.save(project=project, creator=request.user)
+            if Contributor.objects.filter(project=project, user=serializer.validated_data['assigned']):
+                serializer.save(project=project, creator=request.user)
+
+            else:
+                raise serializers.ValidationError("L'assigné doit être un contributeur du projet")
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 

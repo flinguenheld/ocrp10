@@ -70,10 +70,10 @@ class Issue(models.Model):
                                 on_delete=models.CASCADE,
                                 related_name='issue_creator',
                                 editable=False)
-    assigned_to = models.ForeignKey(to=User,
-                                    on_delete=models.CASCADE,
-                                    related_name='issue_assigned',
-                                    null=True) 
+    assigned = models.ForeignKey(to=User,
+                                 on_delete=models.CASCADE,
+                                 related_name='issue_assigned')
+                                 # editable=False)
 
     priority = models.CharField(choices=Priority.choices,
                                 max_length=50,

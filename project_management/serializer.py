@@ -1,10 +1,7 @@
 from rest_framework import serializers
-
 from rest_framework.validators import UniqueTogetherValidator
 
-from authentication.models import User
-from authentication.serializer import SignUpSerializer
-
+from authentication.serializer import UserSerializer
 from project_management.models import (Project,
                                         Contributor,
                                         Issue)
@@ -15,7 +12,6 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type', 'time_created']
-        read_only_fields = ['time_created']
 
 
 class ContributorAddSerializer(serializers.ModelSerializer):
@@ -35,24 +31,26 @@ class ContributorAddSerializer(serializers.ModelSerializer):
 
 class ContributorSerializer(serializers.ModelSerializer):
 
-    user = SignUpSerializer()
+    user = UserSerializer()
 
     class Meta:
         model = Contributor
         fields = ['id', 'user', 'permission']
 
 
-
 class IssueSerializer(serializers.ModelSerializer):
+
+    creator = UserSerializer()
+    assigned = UserSerializer()
 
     class Meta:
         model = Issue
-        fields = ['id', 'title', 'description', 'project', 'creator',
-            'assigned_to', 'priority', 'status', 'tag' 'time_created']
+        fields = ['id', 'title', 'description', 'creator', 'assigned',
+                  'priority', 'status', 'tag', 'time_created']
+
 
 class IssueAddSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['id', 'title', 'description',
-            'assigned_to', 'priority', 'status', 'tag']
+        fields = ['id', 'title', 'description', 'assigned', 'priority', 'status', 'tag']
