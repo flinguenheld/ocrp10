@@ -14,7 +14,7 @@ class Project(models.Model):
     title = models.CharField(max_length=128, unique=True)
     description = models.CharField(max_length=2048, blank=True)
     type = models.CharField(choices=TypeProject.choices, max_length=50)
-    time_created = models.DateTimeField(auto_now_add=True)
+    time_created = models.DateTimeField(auto_now_add=True, editable=False)
 
     def __str__(self):
         return f"{self.id} : {self.title} - {self.type}"
@@ -30,9 +30,11 @@ class Contributor(models.Model):
     user = models.ForeignKey(to=User, on_delete=models.CASCADE)
     permission = models.CharField(choices=Permission.choices,
                                   max_length=50,
-                                  default=Permission.CONTRIBUTOR)
+                                  default=Permission.CONTRIBUTOR,
+                                  editable=False)
 
     class Meta:
+        # ContributorAddSerializer also checks this contraint
         constraints = [
             models.UniqueConstraint(fields=['project', 'user'],
                                     name='unique_contributor')
@@ -66,15 +68,24 @@ class Issue(models.Model):
                                 related_name='issue_project')
     creator = models.ForeignKey(to=User,
                                 on_delete=models.CASCADE,
-                                related_name='issue_creator')
+                                related_name='issue_creator',
+                                editable=False)
     assigned_to = models.ForeignKey(to=User,
                                     on_delete=models.CASCADE,
                                     related_name='issue_assigned',
                                     null=True) 
-    priority = models.CharField(choices=Priority.choices, max_length=50)
-    status = models.CharField(choices=Status.choices, max_length=50)
-    tag = models.CharField(choices=Tag.choices, max_length=50)
-    time_created = models.DateTimeField(auto_now_add=True)
+
+    priority = models.CharField(choices=Priority.choices,
+                                max_length=50,
+                                default=Priority.MEDIUM)
+    status = models.CharField(choices=Status.choices,
+                              max_length=50,
+                              default=Status.TO_DO)
+    tag = models.CharField(choices=Tag.choices,
+                           max_length=50,
+                           default=Tag.TASK)
+    time_created = models.DateTimeField(auto_now_add=True,
+                                        editable=False)
 
     def __str__(self):
         return f"{self.title} - {self.project}"
@@ -82,9 +93,13 @@ class Issue(models.Model):
 class Comment(models.Model):
 
     description = models.CharField(max_length=2048)
-    author = models.ForeignKey(to=User, on_delete=models.CASCADE)
-    issue = models.ForeignKey(to=Issue, on_delete=models.CASCADE)
-    time_created = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(to=User, on_delete=models.CASCADE,
+                               editable=False)
+    issue = models.ForeignKey(to=Issue,
+                              on_delete=models.CASCADE,
+                              editable=False)
+    time_created = models.DateTimeField(auto_now_add=True,
+                                        editable=False)
 
     def __str__(self):
         return f"Comment : {self.issue} - {self.issue}"

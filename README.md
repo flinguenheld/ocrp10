@@ -1,4 +1,4 @@
-[badge](https://img.shields.io/static/v1?label=Project&nbsp;OC&message=10&color=blueviolet&style=for-the-badge)
+![badge](https://img.shields.io/static/v1?label=Project&nbsp;OC&message=10&color=blueviolet&style=for-the-badge)
 ![badge](https://img.shields.io/static/v1?label=Status&message=In&nbsp;progress&color=green&style=for-the-badge)
 
 # ocrp10

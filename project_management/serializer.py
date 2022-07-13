@@ -15,6 +15,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type', 'time_created']
+        read_only_fields = ['time_created']
 
 
 class ContributorAddSerializer(serializers.ModelSerializer):
@@ -22,6 +23,7 @@ class ContributorAddSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contributor
         fields = ['project', 'user', 'permission']
+        read_only_fields = ['permission']
 
         validators = [
             UniqueTogetherValidator(
@@ -40,9 +42,17 @@ class ContributorSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'permission']
 
 
+
 class IssueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issue
         fields = ['id', 'title', 'description', 'project', 'creator',
             'assigned_to', 'priority', 'status', 'tag' 'time_created']
+
+class IssueAddSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Issue
+        fields = ['id', 'title', 'description',
+            'assigned_to', 'priority', 'status', 'tag']
