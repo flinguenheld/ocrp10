@@ -8,13 +8,18 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
 from project_management.permissions import (ProjectViewPermissions,
-                                            IssueCommentViewPermissions)
+                                            IssueCommentViewPermissions,
+                                            IsProjectContributor,
+                                            IsProjectCreator,
+                                            IsAuthor)
 
 from project_management.models import (Project,
                                         Contributor,
                                         Issue,
                                         Comment)
 from project_management.serializer import (ProjectSerializer,
+                                            ProjectSimpleSerializer,
+                                            ProjectDetailsSerializer,
                                             ContributorSerializer,
                                             ContributorAddSerializer,
                                             IssueSerializer,
@@ -23,54 +28,62 @@ from project_management.serializer import (ProjectSerializer,
                                             CommentAddSerializer)
 
 
-class ProjectViewSet(mixins.RetrieveModelMixin,  # Contributor only
-                     mixins.UpdateModelMixin,    # Creator only
+class ProjectViewSet(mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.CreateModelMixin,
+                     mixins.DestroyModelMixin,
                      viewsets.GenericViewSet):
 
-    queryset = Project.objects.all()
-    serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated, ProjectViewPermissions]
 
-    def list(self, request):
-        # IsAuthenticated only
+    def get_permissions(self):
 
-        contribs = Contributor.objects.filter(user=request.user)
-        queryset = Project.objects.filter(contributor__in=contribs)
+        if self.action == 'list' or self.action == 'retrieve':
+            permission_classes = [IsAuthenticated, IsProjectContributor]
 
-        serializer = ProjectSerializer(queryset, many=True)
-        return Response(serializer.data)
+        else:
+            permission_classes = [IsAuthenticated, IsProjectCreator]
 
-    def create(self, request):
-        # IsAuthenticated only
+        return [permission() for permission in permission_classes]
 
-        serializer = ProjectSerializer(data=request.data)
+    def get_queryset(self):
+        
+        if self.action == 'list':
+            contribs = Contributor.objects.filter(user=self.request.user)
+            return Project.objects.filter(contributor__in=contribs)
 
-        if serializer.is_valid():
-            serializer.save()
+        else:
+            return Project.objects.all()
 
-            new_contributor = Contributor(user=request.user,
-                                          project=Project.objects.last(),
-                                          permission=Contributor.Permission.CREATOR)
-            new_contributor.save()
+    def get_serializer_class(self):
+        
+        if self.action == 'list':
+            return ProjectSimpleSerializer
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif self.action == 'retrieve':
+            return ProjectDetailsSerializer
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return ProjectSerializer
 
-    def destroy(self, request, pk=None):
+    def perform_create(self, serializer):
+        serializer.save()
 
-        # Project's author only
-        project = get_object_or_404(Project, pk=pk)
-        self.check_object_permissions(request=request, obj=project)
+        new_contributor = Contributor(user=self.request.user,
+                                      project=Project.objects.last(),
+                                      permission=Contributor.Permission.CREATOR)
+        new_contributor.save()
+
+    def perform_destroy(self, instance):
 
         # Also delete all project's contributors
-        contributors = Contributor.objects.filter(project=project)
+        contributors = Contributor.objects.filter(project=instance)
         for c in contributors:
             c.delete()
 
-        project.delete()
+        # Issues too ?? −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
 
-        return Response(data='Supprimé', status=status.HTTP_204_NO_CONTENT)
+        instance.delete()
 
 
 class ProjectUserViewSet(viewsets.GenericViewSet):

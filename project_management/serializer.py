@@ -14,6 +14,18 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = ['id', 'title', 'description', 'type', 'time_created']
 
+class ProjectSimpleSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Project
+        fields = ['id', 'title', 'type']
+
+class ProjectDetailsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Project
+        fields = ['id', 'title', 'description', 'type', 'time_created']
+
 
 class ContributorAddSerializer(serializers.ModelSerializer):
 
