@@ -66,14 +66,14 @@ class Issue(models.Model):
     project = models.ForeignKey(to=Project,
                                 on_delete=models.CASCADE,
                                 related_name='issue_project')
-    creator = models.ForeignKey(to=User,
+    author = models.ForeignKey(to=User,
                                 on_delete=models.CASCADE,
-                                related_name='issue_creator',
+                                related_name='issue_author',
                                 editable=False)
     assigned = models.ForeignKey(to=User,
                                  on_delete=models.CASCADE,
                                  related_name='issue_assigned')
-                                 # editable=False)
+                                 # editable=False)  # Impossible ?
 
     priority = models.CharField(choices=Priority.choices,
                                 max_length=50,
@@ -96,8 +96,8 @@ class Comment(models.Model):
     author = models.ForeignKey(to=User, on_delete=models.CASCADE,
                                editable=False)
     issue = models.ForeignKey(to=Issue,
-                              on_delete=models.CASCADE,
-                              editable=False)
+                              on_delete=models.CASCADE)
+                              # editable=False)
     time_created = models.DateTimeField(auto_now_add=True,
                                         editable=False)
 

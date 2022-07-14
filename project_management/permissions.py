@@ -1,5 +1,4 @@
 from rest_framework import permissions
-from rest_framework.generics import get_object_or_404
 
 from project_management.models import Contributor
 
@@ -24,8 +23,9 @@ class ProjectViewPermissions(permissions.BasePermission):
 
         return False
 
-class IssueViewPermissions(permissions.BasePermission):
-    """ Permissions for IssueViewSet. """
+
+class IssueCommentViewPermissions(permissions.BasePermission):
+    """ Permissions for IssueViewSet and CommandViewSet. """
 
     def has_object_permission(self, request, view, obj):
 
@@ -35,8 +35,8 @@ class IssueViewPermissions(permissions.BasePermission):
                 return True
 
         elif request.method == 'PUT' or request.method == 'DELETE':
-            # obj -> Issue
-            if request.user == obj.creator:
+            # obj -> Issue or Comment
+            if request.user == obj.author:
                 return True
 
         return False

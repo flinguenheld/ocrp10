@@ -8,19 +8,22 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
 from project_management.permissions import (ProjectViewPermissions,
-                                            IssueViewPermissions)
+                                            IssueCommentViewPermissions)
 
+from project_management.models import (Project,
+                                        Contributor,
+                                        Issue,
+                                        Comment)
 from project_management.serializer import (ProjectSerializer,
                                             ContributorSerializer,
                                             ContributorAddSerializer,
                                             IssueSerializer,
-                                            IssueAddSerializer)
-from project_management.models import (Project,
-                                        Contributor,
-                                        Issue)
+                                            IssueAddSerializer,
+                                            CommentSerializer,
+                                            CommentAddSerializer)
 
 
-class ProjectViewSet(mixins.RetrieveModelMixin,  # Creator only
+class ProjectViewSet(mixins.RetrieveModelMixin,  # Contributor only
                      mixins.UpdateModelMixin,    # Creator only
                      viewsets.GenericViewSet):
 
@@ -56,7 +59,7 @@ class ProjectViewSet(mixins.RetrieveModelMixin,  # Creator only
 
     def destroy(self, request, pk=None):
 
-        # Project's creator only
+        # Project's author only
         project = get_object_or_404(Project, pk=pk)
         self.check_object_permissions(request=request, obj=project)
 
@@ -89,26 +92,25 @@ class ProjectUserViewSet(viewsets.GenericViewSet):
 
     def create(self, request, project_pk):
 
-        # Project's creator only
+        # Project's author only
         self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
 
         data = {'project': project_pk, 'permission': Contributor.Permission.CONTRIBUTOR}
 
-        if 'new_contributor' in request.data:
+        if 'new_contributor' in request.data:           # Serializer refused by validation if forgotten
             data['user'] = request.data['new_contributor']
 
         serializer = ContributorAddSerializer(data=data)
 
         if serializer.is_valid():
             serializer.save()
-
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk=None, project_pk=None):
 
-        # Project's creator only
+        # Project's author only
         self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
 
         contributor = Contributor.objects.filter(user=pk, project=project_pk)
@@ -120,18 +122,17 @@ class ProjectUserViewSet(viewsets.GenericViewSet):
 
             else:
                 return Response(status=status.HTTP_403_FORBIDDEN)
-
         else:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class IssueViewSet(mixins.UpdateModelMixin,     # Issue's creator only
-                   mixins.DestroyModelMixin,    # Issue's creator only
+class IssueViewSet(mixins.UpdateModelMixin,     # Issue's author only
+                   mixins.DestroyModelMixin,    # Issue's author only
                    viewsets.GenericViewSet):
 
     queryset = Issue.objects.all()
     serializer_class = IssueAddSerializer
-    permission_classes = [IsAuthenticated, IssueViewPermissions]
+    permission_classes = [IsAuthenticated, IssueCommentViewPermissions]
 
     def list(self, request, project_pk):
 
@@ -154,7 +155,7 @@ class IssueViewSet(mixins.UpdateModelMixin,     # Issue's creator only
 
         if serializer.is_valid():
             if Contributor.objects.filter(project=project, user=serializer.validated_data['assigned']):
-                serializer.save(project=project, creator=request.user)
+                serializer.save(project=project, author=request.user)
 
             else:
                 raise serializers.ValidationError("L'assigné doit être un contributeur du projet")
@@ -162,3 +163,44 @@ class IssueViewSet(mixins.UpdateModelMixin,     # Issue's creator only
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CommentViewSet(mixins.UpdateModelMixin,       # Comment's author only
+                     mixins.DestroyModelMixin,      # Comment's author only
+                     viewsets.GenericViewSet):
+
+    queryset = Comment.objects.all()
+    serializer_class = CommentAddSerializer
+    permission_classes = [IsAuthenticated, IssueCommentViewPermissions]
+
+    def list(self, request, project_pk=None, issue_pk=None):
+        
+        # Project contributors only
+        self.check_object_permissions(request, get_object_or_404(Project, pk=project_pk))
+
+        comments = Comment.objects.filter(issue=issue_pk)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    def create(self, request, project_pk=None, issue_pk=None):
+
+        # Project contributors only
+        self.check_object_permissions(request, get_object_or_404(Project, pk=project_pk))
+
+        issue = get_object_or_404(Issue, pk=issue_pk)
+        serializer = CommentAddSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(issue=issue, author=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, project_pk=None, issue_pk=None, pk=None):
+
+        # Project contributors only
+        self.check_object_permissions(request, get_object_or_404(Project, pk=project_pk))
+
+        comment = get_object_or_404(Comment, pk=pk)
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data)

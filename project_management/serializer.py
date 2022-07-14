@@ -4,7 +4,8 @@ from rest_framework.validators import UniqueTogetherValidator
 from authentication.serializer import UserSerializer
 from project_management.models import (Project,
                                         Contributor,
-                                        Issue)
+                                        Issue,
+                                        Comment)
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -40,13 +41,20 @@ class ContributorSerializer(serializers.ModelSerializer):
 
 class IssueSerializer(serializers.ModelSerializer):
 
-    creator = UserSerializer()
+    author = UserSerializer()
     assigned = UserSerializer()
 
     class Meta:
         model = Issue
-        fields = ['id', 'title', 'description', 'creator', 'assigned',
+        fields = ['id', 'title', 'description', 'author', 'assigned',
                   'priority', 'status', 'tag', 'time_created']
+
+
+class IssueSimpleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Issue
+        fields = ['id', 'title']
 
 
 class IssueAddSerializer(serializers.ModelSerializer):
@@ -54,3 +62,20 @@ class IssueAddSerializer(serializers.ModelSerializer):
     class Meta:
         model = Issue
         fields = ['id', 'title', 'description', 'assigned', 'priority', 'status', 'tag']
+
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    issue = IssueSimpleSerializer()
+    author = UserSerializer()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'description', 'issue', 'author', 'time_created']
+
+
+class CommentAddSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'description']
