@@ -31,8 +31,7 @@ class ContributorAddSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = ['project', 'user', 'permission']
-        read_only_fields = ['permission']
+        fields = ['user', 'project', 'permission']
 
         validators = [
             UniqueTogetherValidator(
@@ -48,7 +47,7 @@ class ContributorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = ['id', 'user', 'permission']
+        fields = ['user', 'permission']
 
 
 class IssueSerializer(serializers.ModelSerializer):

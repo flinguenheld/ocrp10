@@ -2,6 +2,7 @@ from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
@@ -14,6 +15,7 @@ from project_management.permissions import (ProjectViewPermissions,
                                             IsAuthor)
 
 from project_management.models import (Project,
+                                        User,
                                         Contributor,
                                         Issue,
                                         Comment)
@@ -38,7 +40,6 @@ class ProjectViewSet(mixins.ListModelMixin,
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve' or self.action == 'create':
             permission_classes = [IsAuthenticated]
-
         else:
             permission_classes = [IsAuthenticated, IsProjectCreator]
 
@@ -65,13 +66,13 @@ class ProjectViewSet(mixins.ListModelMixin,
     def perform_create(self, serializer):
         serializer.save()
 
+        # Creator's creation
         new_contributor = Contributor(user=self.request.user,
                                       project=Project.objects.last(),
                                       permission=Contributor.Permission.CREATOR)
         new_contributor.save()
 
     def perform_destroy(self, instance):
-
         # Also delete all project's contributors
         contributors = Contributor.objects.filter(project=instance)
         for c in contributors:
@@ -81,96 +82,82 @@ class ProjectViewSet(mixins.ListModelMixin,
         instance.delete()
 
 
-class ProjectUserViewSet(viewsets.GenericViewSet):
-    """ Views for /projects/<id>/users/"""
+class ProjectUserViewSet(mixins.ListModelMixin,
+                         mixins.CreateModelMixin,
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet):
+    """ View for /projects/<id>/users/"""
 
-    queryset = Contributor.objects.all()
-    serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated, ProjectViewPermissions]
-
-    def list(self, request, project_pk):
-
-        # Contributor only
-        self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
-
-        contribs = Contributor.objects.filter(project=project_pk)
-        serializer = ContributorSerializer(contribs, many=True)
-
-        return Response(serializer.data)
-
-    def create(self, request, project_pk):
-
-        # Project's author only
-        self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
-
-        data = {'project': project_pk, 'permission': Contributor.Permission.CONTRIBUTOR}
-
-        if 'new_contributor' in request.data:           # Serializer refused by validation if forgotten
-            data['user'] = request.data['new_contributor']
-
-        serializer = ContributorAddSerializer(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None, project_pk=None):
-
-        # Project's author only
-        self.check_object_permissions(request, obj=get_object_or_404(Project, pk=project_pk))
-
-        contributor = Contributor.objects.filter(user=pk, project=project_pk)
-
-        if contributor:
-            if contributor.last().permission != Contributor.Permission.CREATOR:
-                contributor.last().delete()
-                return Response(data='Supprimé', status=status.HTTP_204_NO_CONTENT)
-
-            else:
-                return Response(status=status.HTTP_403_FORBIDDEN)
+    def get_permissions(self):
+        if self.action == 'list':
+            permission_classes = [IsAuthenticated, IsProjectContributor]
         else:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            permission_classes = [IsAuthenticated, IsProjectCreator]
+
+        return [permission() for permission in permission_classes]
+
+    def get_queryset(self):
+        return Contributor.objects.filter(project=self.kwargs['project_pk'])
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ContributorSerializer
+        else:
+            return ContributorAddSerializer
 
 
-class IssueViewSet(mixins.UpdateModelMixin,     # Issue's author only
-                   mixins.DestroyModelMixin,    # Issue's author only
+    def create(self, request, *args, **kwargs):
+        request.data._mutable = True
+        request.data['project'] = kwargs['project_pk']
+        request.data['permission'] = Contributor.Permission.CONTRIBUTOR
+
+        return super().create(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['project_pk'])
+        user = get_object_or_404(User, pk=kwargs['pk'])
+        contributor = get_object_or_404(Contributor, user=user, project=project)
+
+        # Prevent creator deletion
+        if contributor.permission == Contributor.Permission.CREATOR:
+            return Response(data="Project's creator can't be delete", status=status.HTTP_403_FORBIDDEN)
+        else:
+            contributor.delete()
+            return Response(data='Contributor removed', status=status.HTTP_204_NO_CONTENT)
+
+
+class IssueViewSet(mixins.ListModelMixin,
+                   mixins.CreateModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.DestroyModelMixin,
                    viewsets.GenericViewSet):
 
-    queryset = Issue.objects.all()
     serializer_class = IssueAddSerializer
-    permission_classes = [IsAuthenticated, IssueCommentViewPermissions]
 
-    def list(self, request, project_pk):
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'create':
+            permission_classes = [IsAuthenticated, IsProjectContributor]
+        else:
+            permission_classes = [IsAuthenticated, IsAuthor]
 
-        # Project contributors only
-        project = get_object_or_404(Project, pk=project_pk)
-        self.check_object_permissions(request, project)
+        return [permission() for permission in permission_classes]
 
-        issues = Issue.objects.filter(project=project)
-        serializer = IssueSerializer(issues, many=True)
+    def get_queryset(self):
+        return Issue.objects.filter(project=self.kwargs['project_pk'])
 
-        return Response(serializer.data)
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return IssueSerializer
+        else:
+            return IssueAddSerializer
 
-    def create(self, request, project_pk=None):
-
-        # Project contributors only
-        project = get_object_or_404(Project, pk=project_pk)
-        self.check_object_permissions(request, project)
-
-        serializer = IssueAddSerializer(data=request.data)
-
-        if serializer.is_valid():
-            if Contributor.objects.filter(project=project, user=serializer.validated_data['assigned']):
-                serializer.save(project=project, author=request.user)
-
-            else:
-                raise serializers.ValidationError("L'assigné doit être un contributeur du projet")
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def perform_create(self, serializer):
+        # Assigned user has to be a contributor
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
+        if Contributor.objects.filter(project=project, user=serializer.validated_data['assigned']):
+            serializer.save(project=project, author=self.request.user)
+        else:
+            raise ValidationError("Assigned user has to be a project's contributor")
 
 
 class CommentViewSet(mixins.UpdateModelMixin,       # Comment's author only

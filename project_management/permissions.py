@@ -1,25 +1,34 @@
 from rest_framework import permissions
+from rest_framework.generics import get_object_or_404
 
-from project_management.models import Contributor
+from project_management.models import (Project,
+                                       Contributor)
 
 
 
 class IsProjectContributor(permissions.BasePermission):
 
-    def has_object_permission(self, request, view, obj):
+    def has_permission(self, request, view):
 
-        if Contributor.objects.filter(user=request.user, project=obj):
+        print('LE CONTRIBUTEUR !!!!!!!!')
+        project = get_object_or_404(Project, pk=view.kwargs['project_pk'])
+        if Contributor.objects.filter(user=request.user, project=project):
             return True
 
         return False
 
+
 class IsProjectCreator(permissions.BasePermission):
     
-    def has_object_permission(self, request, view, obj):
-
+    def has_permission(self, request, view):
 
         print('LE CREATEUR !!!')
-        contributor = Contributor.objects.filter(user=request.user, project=obj).last()
+        if 'project_pk' in view.kwargs:
+            project = get_object_or_404(Project, pk=view.kwargs['project_pk'])
+        else:
+            project = get_object_or_404(Project, pk=view.kwargs['pk'])
+
+        contributor = Contributor.objects.filter(user=request.user, project=project).last()
         if contributor and contributor.permission == Contributor.Permission.CREATOR: 
             return True
 
