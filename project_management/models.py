@@ -17,7 +17,7 @@ class Project(models.Model):
     time_created = models.DateTimeField(auto_now_add=True, editable=False)
 
     def __str__(self):
-        return f"{self.id} : {self.title} - {self.type}"
+        return f"Project [{self.id} : {self.title} - {self.type}]"
 
 
 class Contributor(models.Model):
@@ -41,7 +41,7 @@ class Contributor(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.id} : {self.user.email} - {self.permission} - {self.project}"
+        return f"Contrib [{self.id} : {self.user.email} - {self.permission}]"
 
 
 class Issue(models.Model):
@@ -88,7 +88,7 @@ class Issue(models.Model):
                                         editable=False)
 
     def __str__(self):
-        return f"{self.title} - {self.project}"
+        return f"Issue [{self.title} - {self.project}]"
 
 class Comment(models.Model):
 
@@ -102,4 +102,4 @@ class Comment(models.Model):
                                         editable=False)
 
     def __str__(self):
-        return f"Comment : {self.issue} - {self.issue}"
+        return f"Comment [{self.description} - {self.author} - {self.issue}]"

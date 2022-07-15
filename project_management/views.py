@@ -1,18 +1,16 @@
 from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework import status
-from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
-from project_management.permissions import (ProjectViewPermissions,
-                                            IssueCommentViewPermissions,
-                                            IsProjectContributor,
+from project_management.permissions import (IsProjectContributor,
                                             IsProjectCreator,
-                                            IsAuthor)
+                                            IsAuthor,
+                                            IsIssueInProject)
 
 from project_management.models import (Project,
                                         User,
@@ -27,6 +25,7 @@ from project_management.serializer import (ProjectSerializer,
                                             IssueSerializer,
                                             IssueAddSerializer,
                                             CommentSerializer,
+                                            CommentDetailsSerializer,
                                             CommentAddSerializer)
 
 
@@ -132,8 +131,6 @@ class IssueViewSet(mixins.ListModelMixin,
                    mixins.DestroyModelMixin,
                    viewsets.GenericViewSet):
 
-    serializer_class = IssueAddSerializer
-
     def get_permissions(self):
         if self.action == 'list' or self.action == 'create':
             permission_classes = [IsAuthenticated, IsProjectContributor]
@@ -160,42 +157,32 @@ class IssueViewSet(mixins.ListModelMixin,
             raise ValidationError("Assigned user has to be a project's contributor")
 
 
-class CommentViewSet(mixins.UpdateModelMixin,       # Comment's author only
-                     mixins.DestroyModelMixin,      # Comment's author only
+class CommentViewSet(mixins.ListModelMixin,
+                     mixins.CreateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin,
                      viewsets.GenericViewSet):
 
-    queryset = Comment.objects.all()
-    serializer_class = CommentAddSerializer
-    permission_classes = [IsAuthenticated, IssueCommentViewPermissions]
+    def get_permissions(self):
+        if self.action == 'list' or self.action == 'create' or self.action == 'retrieve':
+            permission_classes = [IsAuthenticated, IsIssueInProject, IsProjectContributor]
+        else:
+            permission_classes = [IsAuthenticated, IsIssueInProject, IsAuthor]
 
-    def list(self, request, project_pk=None, issue_pk=None):
-        
-        # Project contributors only
-        self.check_object_permissions(request, get_object_or_404(Project, pk=project_pk))
+        return [permission() for permission in permission_classes]
 
-        comments = Comment.objects.filter(issue=issue_pk)
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        return Comment.objects.filter(issue=self.kwargs['issue_pk'])
 
-    def create(self, request, project_pk=None, issue_pk=None):
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return CommentSerializer
+        elif self.action == 'retrieve':
+            return CommentDetailsSerializer
+        else:
+            return CommentAddSerializer
 
-        # Project contributors only
-        self.check_object_permissions(request, get_object_or_404(Project, pk=project_pk))
-
-        issue = get_object_or_404(Issue, pk=issue_pk)
-        serializer = CommentAddSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save(issue=issue, author=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def retrieve(self, request, project_pk=None, issue_pk=None, pk=None):
-
-        # Project contributors only
-        self.check_object_permissions(request, get_object_or_404(Project, pk=project_pk))
-
-        comment = get_object_or_404(Comment, pk=pk)
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        issue = get_object_or_404(Issue, pk=self.kwargs['issue_pk'])
+        serializer.save(issue=issue, author=self.request.user)

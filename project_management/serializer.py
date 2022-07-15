@@ -77,6 +77,13 @@ class IssueAddSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = Comment
+        fields = ['id', 'description']
+
+
+class CommentDetailsSerializer(serializers.ModelSerializer):
+
     issue = IssueSimpleSerializer()
     author = UserSerializer()
 
