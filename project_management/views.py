@@ -35,11 +35,9 @@ class ProjectViewSet(mixins.ListModelMixin,
                      mixins.DestroyModelMixin,
                      viewsets.GenericViewSet):
 
-
     def get_permissions(self):
-
-        if self.action == 'list' or self.action == 'retrieve':
-            permission_classes = [IsAuthenticated, IsProjectContributor]
+        if self.action == 'list' or self.action == 'retrieve' or self.action == 'create':
+            permission_classes = [IsAuthenticated]
 
         else:
             permission_classes = [IsAuthenticated, IsProjectCreator]
@@ -47,8 +45,7 @@ class ProjectViewSet(mixins.ListModelMixin,
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        
-        if self.action == 'list':
+        if self.action == 'list' or self.action == 'retrieve':
             contribs = Contributor.objects.filter(user=self.request.user)
             return Project.objects.filter(contributor__in=contribs)
 
@@ -56,7 +53,6 @@ class ProjectViewSet(mixins.ListModelMixin,
             return Project.objects.all()
 
     def get_serializer_class(self):
-        
         if self.action == 'list':
             return ProjectSimpleSerializer
 
@@ -82,7 +78,6 @@ class ProjectViewSet(mixins.ListModelMixin,
             c.delete()
 
         # Issues too ?? −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
-
         instance.delete()
 
 

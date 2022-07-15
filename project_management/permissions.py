@@ -17,6 +17,8 @@ class IsProjectCreator(permissions.BasePermission):
     
     def has_object_permission(self, request, view, obj):
 
+
+        print('LE CREATEUR !!!')
         contributor = Contributor.objects.filter(user=request.user, project=obj).last()
         if contributor and contributor.permission == Contributor.Permission.CREATOR: 
             return True
