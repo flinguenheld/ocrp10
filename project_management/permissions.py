@@ -11,7 +11,7 @@ class IsProjectContributor(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        print('LE CONTRIBUTEUR !!!!!!!!')  #−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−− 
+        print('LE CONTRIBUTEUR !!!!!!!!')  # −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
         project = get_object_or_404(Project, pk=view.kwargs['project_pk'])
         if Contributor.objects.filter(user=request.user, project=project):
             return True
@@ -23,14 +23,14 @@ class IsProjectCreator(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        print('LE CREATEUR !!!')  #−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−− 
+        print('LE CREATEUR !!!')  # −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
         if 'project_pk' in view.kwargs:
             project = get_object_or_404(Project, pk=view.kwargs['project_pk'])
         else:
             project = get_object_or_404(Project, pk=view.kwargs['pk'])
 
         contributor = Contributor.objects.filter(user=request.user, project=project).last()
-        if contributor and contributor.permission == Contributor.Permission.CREATOR: 
+        if contributor and contributor.permission == Contributor.Permission.CREATOR:
             return True
 
         raise PermissionDenied("Only the project's creator is authorized to do this action")
@@ -40,7 +40,7 @@ class IsAuthor(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
 
-        print('L AUTEUR !!!!!')  #−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−− 
+        print('L AUTEUR !!!!!')  # −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
         if request.user == obj.author:
             return True
 
@@ -48,8 +48,8 @@ class IsAuthor(permissions.BasePermission):
 
 
 class IsIssueInProject(permissions.BasePermission):
-    """ Used to check the url
-        If the issue is really a part of the project """
+    """ Used to check a 'comment url' with a project id and an issue id:
+        Is the issue really a part of the project ? """
 
     def has_permission(self, request, view):
         if 'project_pk' in view.kwargs and 'issue_pk' in view.kwargs:

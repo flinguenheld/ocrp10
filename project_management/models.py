@@ -73,7 +73,7 @@ class Issue(models.Model):
     assigned = models.ForeignKey(to=User,
                                  on_delete=models.CASCADE,
                                  related_name='issue_assigned')
-                                 # editable=False)  # Impossible ?
+    # editable=False) Impossible ?
 
     priority = models.CharField(choices=Priority.choices,
                                 max_length=50,
@@ -90,6 +90,7 @@ class Issue(models.Model):
     def __str__(self):
         return f"Issue [{self.title} - {self.project}]"
 
+
 class Comment(models.Model):
 
     description = models.CharField(max_length=2048)
@@ -97,7 +98,7 @@ class Comment(models.Model):
                                editable=False)
     issue = models.ForeignKey(to=Issue,
                               on_delete=models.CASCADE)
-                              # editable=False)
+    # editable=False)
     time_created = models.DateTimeField(auto_now_add=True,
                                         editable=False)
 

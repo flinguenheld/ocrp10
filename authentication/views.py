@@ -10,7 +10,8 @@ class SignUpView(APIView):
     serializer_class = SignUpSerializer
 
     def get(self, request):
-        return Response(data={"Bienvenue, veuillez vous inscrire pour accéder à l'API"}, status=status.HTTP_405_NO_CONTENT)
+        return Response(data={"Bienvenue, veuillez vous inscrire pour accéder à l'API"},
+                        status=status.HTTP_405_NO_CONTENT)
 
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)

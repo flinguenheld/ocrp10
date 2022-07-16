@@ -8,17 +8,20 @@ from project_management.models import (Project,
                                         Comment)
 
 
+# ##################################################################
 class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
         fields = ['id', 'title', 'description', 'type', 'time_created']
 
+
 class ProjectSimpleSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = Project
         fields = ['id', 'title', 'type']
+
 
 class ProjectDetailsSerializer(serializers.ModelSerializer):
 
@@ -27,6 +30,7 @@ class ProjectDetailsSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'type', 'time_created']
 
 
+# ##################################################################
 class ContributorAddSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -50,6 +54,7 @@ class ContributorSerializer(serializers.ModelSerializer):
         fields = ['user', 'permission']
 
 
+# ##################################################################
 class IssueSerializer(serializers.ModelSerializer):
 
     author = UserSerializer()
@@ -75,6 +80,7 @@ class IssueAddSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'assigned', 'priority', 'status', 'tag']
 
 
+# ##################################################################
 class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:

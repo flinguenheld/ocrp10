@@ -35,6 +35,7 @@ class ProjectViewSet(mixins.ListModelMixin,
                      mixins.CreateModelMixin,
                      mixins.DestroyModelMixin,
                      viewsets.GenericViewSet):
+    """ /projects/ """
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'retrieve' or self.action == 'create':
@@ -85,7 +86,7 @@ class ProjectUserViewSet(mixins.ListModelMixin,
                          mixins.CreateModelMixin,
                          mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
-    """ View for /projects/<id>/users/"""
+    """ /projects/<id>/users/ """
 
     def get_permissions(self):
         if self.action == 'list':
@@ -103,7 +104,6 @@ class ProjectUserViewSet(mixins.ListModelMixin,
             return ContributorSerializer
         else:
             return ContributorAddSerializer
-
 
     def create(self, request, *args, **kwargs):
         request.data._mutable = True
@@ -130,6 +130,7 @@ class IssueViewSet(mixins.ListModelMixin,
                    mixins.UpdateModelMixin,
                    mixins.DestroyModelMixin,
                    viewsets.GenericViewSet):
+    """ /projects/<id>/issues/ """
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'create':
@@ -149,7 +150,7 @@ class IssueViewSet(mixins.ListModelMixin,
             return IssueAddSerializer
 
     def perform_create(self, serializer):
-        # Assigned user has to be a contributor
+        # 'Assigned user' has to be a contributor
         project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
         if Contributor.objects.filter(project=project, user=serializer.validated_data['assigned']):
             serializer.save(project=project, author=self.request.user)
@@ -163,6 +164,7 @@ class CommentViewSet(mixins.ListModelMixin,
                      mixins.UpdateModelMixin,
                      mixins.DestroyModelMixin,
                      viewsets.GenericViewSet):
+    """ /projects/<id>/issues/<id>/comments/ """
 
     def get_permissions(self):
         if self.action == 'list' or self.action == 'create' or self.action == 'retrieve':
