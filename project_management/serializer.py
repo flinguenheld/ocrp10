@@ -31,7 +31,7 @@ class ProjectDetailsSerializer(serializers.ModelSerializer):
 
 
 # ##################################################################
-class ContributorAddSerializer(serializers.ModelSerializer):
+class ContributorCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Contributor
@@ -73,7 +73,7 @@ class IssueSimpleSerializer(serializers.ModelSerializer):
         fields = ['id', 'title']
 
 
-class IssueAddSerializer(serializers.ModelSerializer):
+class IssueCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issue
@@ -98,7 +98,7 @@ class CommentDetailsSerializer(serializers.ModelSerializer):
         fields = ['id', 'description', 'issue', 'author', 'time_created']
 
 
-class CommentAddSerializer(serializers.ModelSerializer):
+class CommentCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment

@@ -21,12 +21,12 @@ from project_management.serializer import (ProjectSerializer,
                                             ProjectSimpleSerializer,
                                             ProjectDetailsSerializer,
                                             ContributorSerializer,
-                                            ContributorAddSerializer,
+                                            ContributorCreateSerializer,
                                             IssueSerializer,
-                                            IssueAddSerializer,
+                                            IssueCreateSerializer,
                                             CommentSerializer,
                                             CommentDetailsSerializer,
-                                            CommentAddSerializer)
+                                            CommentCreateSerializer)
 
 
 class ProjectViewSet(mixins.ListModelMixin,
@@ -103,7 +103,7 @@ class ProjectUserViewSet(mixins.ListModelMixin,
         if self.action == 'list':
             return ContributorSerializer
         else:
-            return ContributorAddSerializer
+            return ContributorCreateSerializer
 
     def create(self, request, *args, **kwargs):
         request.data._mutable = True
@@ -147,7 +147,7 @@ class IssueViewSet(mixins.ListModelMixin,
         if self.action == 'list':
             return IssueSerializer
         else:
-            return IssueAddSerializer
+            return IssueCreateSerializer
 
     def perform_create(self, serializer):
         # 'Assigned user' has to be a contributor
@@ -183,7 +183,7 @@ class CommentViewSet(mixins.ListModelMixin,
         elif self.action == 'retrieve':
             return CommentDetailsSerializer
         else:
-            return CommentAddSerializer
+            return CommentCreateSerializer
 
     def perform_create(self, serializer):
         issue = get_object_or_404(Issue, pk=self.kwargs['issue_pk'])
