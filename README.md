@@ -9,16 +9,16 @@ Create a Secure RESTful API Using Django REST
 
 ****
 ### Description
-The project purpose is to discover Django REST framework thanks to the development of a backend application.
-This application is an issue tracking system and needs an API.
-The latter allows to:
+The project purpose is to discover Django REST framework thanks to the development of a backend application.  
+This application is an issue tracking system and needs an API.  
+The latter allows to:  
 - Create accounts and login
 - Create projects
 - Associate users to projects
 - Create issues for a project (associated with users)
 - Create comments for these issues
 
-All actions are secure according to the [documentation](#documentation).
+All endpoints are secure according to the [documentation](#documentation).
 
 ****
 ### Installation
@@ -44,7 +44,7 @@ Install them :
 ****
 ### Launch
 
-Move into *ocrp10/* folder and activate the virtual environment.
+Move into *ocrp10/* folder and activate the virtual environment.  
 Launch the server with the command :
 
     python manage.py runserver
@@ -59,7 +59,7 @@ Then, you can use your browser, Postman or your terminal as well.
 ### Documentations
 
 <a name='documentation'></a>
-All endpoints are explain in the Postman documentation :
+All endpoints are explained in the Postman documentation :
 
 [![Logo PostMan](https://raw.githubusercontent.com/FLinguenheld/ocrp10/main/logos/postman.png "Postman")](https://documenter.getpostman.com/view/19051270/UzQvtQt1)
 
@@ -83,7 +83,8 @@ Moreover, the admin website is open, you can access by this url and use the admi
 ****
 ### Pep8
 
-The flake8 package is present in the virtual environment. You can generate a new report with the following command :  
+The flake8 package is present in the virtual environment.  
+You can generate a new report with the following command :  
 (check the folder *flake8-report/* to see results, and the file *tox.ini* to modify options)
 
     flake8

@@ -38,20 +38,19 @@ class ProjectViewSet(mixins.ListModelMixin,
     """ /projects/ """
 
     def get_permissions(self):
-        if self.action == 'list' or self.action == 'retrieve' or self.action == 'create':
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [IsAuthenticated, IsProjectCreator]
+        permission_classes = [IsAuthenticated]
+
+        if self.action == 'retrieve':
+            permission_classes.append(IsProjectContributor)
+        elif self.action == 'update' or self.action == 'destroy':
+            permission_classes.append(IsProjectContributor)
+            permission_classes.append(IsProjectCreator)
 
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            contribs = Contributor.objects.filter(user=self.request.user)
-            return Project.objects.filter(contributor__in=contribs)
-
-        else:
-            return Project.objects.all()
+        contribs = Contributor.objects.filter(user=self.request.user)
+        return Project.objects.filter(contributor__in=contribs)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -78,7 +77,7 @@ class ProjectViewSet(mixins.ListModelMixin,
         for c in contributors:
             c.delete()
 
-        # Issues too ?? −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
+        # Issues and comments are deleted in cascade
         instance.delete()
 
 
@@ -89,10 +88,9 @@ class ProjectUserViewSet(mixins.ListModelMixin,
     """ /projects/<id>/users/ """
 
     def get_permissions(self):
-        if self.action == 'list':
-            permission_classes = [IsAuthenticated, IsProjectContributor]
-        else:
-            permission_classes = [IsAuthenticated, IsProjectCreator]
+        permission_classes = [IsAuthenticated, IsProjectContributor]
+        if self.action == 'create' or self.action == 'destroy':
+            permission_classes.append(IsProjectCreator)
 
         return [permission() for permission in permission_classes]
 
@@ -114,13 +112,20 @@ class ProjectUserViewSet(mixins.ListModelMixin,
 
     def destroy(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['project_pk'])
-        user = get_object_or_404(User, pk=kwargs['pk'])
-        contributor = get_object_or_404(Contributor, user=user, project=project)
+        user_to_delete = get_object_or_404(User, pk=kwargs['pk'])
+        contributor = get_object_or_404(Contributor, user=user_to_delete, project=project)
 
         # Prevent creator deletion
         if contributor.permission == Contributor.Permission.CREATOR:
             return Response(data="Project's creator can't be delete", status=status.HTTP_403_FORBIDDEN)
         else:
+            # Delete all user's comments and issues
+            for comment in Comment.objects.filter(issue__project=project, author=user_to_delete):
+                comment.delete()
+
+            for issue in Issue.objects.filter(project=project, author=user_to_delete):
+                issue.delete()
+
             contributor.delete()
             return Response(data='Contributor removed', status=status.HTTP_204_NO_CONTENT)
 
@@ -133,10 +138,9 @@ class IssueViewSet(mixins.ListModelMixin,
     """ /projects/<id>/issues/ """
 
     def get_permissions(self):
-        if self.action == 'list' or self.action == 'create':
-            permission_classes = [IsAuthenticated, IsProjectContributor]
-        else:
-            permission_classes = [IsAuthenticated, IsAuthor]
+        permission_classes = [IsAuthenticated, IsProjectContributor]
+        if self.action == 'update' or self.action == 'destroy':
+            permission_classes.append(IsAuthor)
 
         return [permission() for permission in permission_classes]
 
@@ -167,10 +171,9 @@ class CommentViewSet(mixins.ListModelMixin,
     """ /projects/<id>/issues/<id>/comments/ """
 
     def get_permissions(self):
-        if self.action == 'list' or self.action == 'create' or self.action == 'retrieve':
-            permission_classes = [IsAuthenticated, IsIssueInProject, IsProjectContributor]
-        else:
-            permission_classes = [IsAuthenticated, IsIssueInProject, IsAuthor]
+        permission_classes = [IsAuthenticated, IsIssueInProject, IsProjectContributor]
+        if self.action == 'update' or self.action == 'destroy':
+            permission_classes.append(IsAuthor)
 
         return [permission() for permission in permission_classes]
 

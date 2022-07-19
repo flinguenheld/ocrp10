@@ -10,20 +10,20 @@ from project_management.models import (Project,
 class IsProjectContributor(permissions.BasePermission):
 
     def has_permission(self, request, view):
+        if 'project_pk' in view.kwargs:
+            project = get_object_or_404(Project, pk=view.kwargs['project_pk'])
+        else:
+            project = get_object_or_404(Project, pk=view.kwargs['pk'])
 
-        print('LE CONTRIBUTEUR !!!!!!!!')  # −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
-        project = get_object_or_404(Project, pk=view.kwargs['project_pk'])
         if Contributor.objects.filter(user=request.user, project=project):
             return True
 
-        raise PermissionDenied("Only project's contributors are authorized to do this action")
+        raise PermissionDenied("Only project's contributors are authorized")
 
 
 class IsProjectCreator(permissions.BasePermission):
 
     def has_permission(self, request, view):
-
-        print('LE CREATEUR !!!')  # −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
         if 'project_pk' in view.kwargs:
             project = get_object_or_404(Project, pk=view.kwargs['project_pk'])
         else:
@@ -33,14 +33,12 @@ class IsProjectCreator(permissions.BasePermission):
         if contributor and contributor.permission == Contributor.Permission.CREATOR:
             return True
 
-        raise PermissionDenied("Only the project's creator is authorized to do this action")
+        raise PermissionDenied("Only the project's creator is authorized")
 
 
 class IsAuthor(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
-
-        print('L AUTEUR !!!!!')  # −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
         if request.user == obj.author:
             return True
 

@@ -83,9 +83,11 @@ class IssueCreateSerializer(serializers.ModelSerializer):
 # ##################################################################
 class CommentSerializer(serializers.ModelSerializer):
 
+    issue = IssueSimpleSerializer()
+
     class Meta:
         model = Comment
-        fields = ['id', 'description']
+        fields = ['id', 'description', 'issue']
 
 
 class CommentDetailsSerializer(serializers.ModelSerializer):
