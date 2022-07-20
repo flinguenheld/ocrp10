@@ -11,7 +11,7 @@ Create a Secure RESTful API Using Django REST
 ### Description
 The project purpose is to discover Django REST framework thanks to the development of a backend application.  
 This application is an issue tracking system and needs an API.  
-The latter allows to:  
+The latter allows one to:  
 - Create accounts and login
 - Create projects
 - Associate users to projects
@@ -23,16 +23,16 @@ All endpoints are secure according to the [documentation](#documentation).
 ****
 ### Installation
 
-Open your terminal and move to the folder where you want to install the API.  
-Then, clone this depot :
+Open your terminal and navigate to the folder where you want to install the API.  
+Then, clone this repository :
 
     git clone https://github.com/FLinguenheld/ocrp10
 
-Move into *ocrp10/* folder and create a virtual environment :
+Navigate into the *ocrp10/* folder and create a virtual environment :
 
     python -m venv env
 
-Active it :
+Activate it :
 
     source env/bin/activate
 
@@ -44,7 +44,7 @@ Install them :
 ****
 ### Launch
 
-Move into *ocrp10/* folder and activate the virtual environment.  
+Navigate into the *ocrp10/* folder and activate the virtual environment.  
 Launch the server with the command :
 
     python manage.py runserver
@@ -75,8 +75,9 @@ It already contains several users :
     flo@softdesk.fr         softdesk2000
     gerard@softdesk.fr      softdesk2000
     michel@softdesk.fr      softdesk2000
+    julie@softdesk.fr       softdesk2000
 
-Moreover, the admin website is open, you can access by this url and use the admin account :
+Moreover, the admin website is open, you can access it by this url and use the admin account :
 
     http://localhost:8000/admin/
 
@@ -85,6 +86,7 @@ Moreover, the admin website is open, you can access by this url and use the admi
 
 The flake8 package is present in the virtual environment.  
 You can generate a new report with the following command :  
-(check the folder *flake8-report/* to see results, and the file *tox.ini* to modify options)
 
     flake8
+
+Check the folder *flake8-report/* to see the results, and the file *tox.ini* to modify options.
